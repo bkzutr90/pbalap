@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin Gocart</title>
+<style>
+body{font-family:system-ui,sans-serif;background:#0b0f1a;color:#fff;max-width:640px;margin:auto;padding:16px}
+label{display:block;margin:10px 0 3px;font-size:13px;color:#ffd84d}
+input[type=text],input[type=number],input[type=password]{width:100%;padding:9px;border-radius:6px;border:0;font-size:15px}
+button{padding:9px 13px;margin:3px;border:0;border-radius:6px;background:#ffd84d;font-weight:700;cursor:pointer}
+button.on{background:#4dff88}h2{border-bottom:1px solid #333;padding-bottom:4px;margin-top:26px}
+</style></head><body>
+<h1>⚙️ Admin Gocart</h1>
+<div id="login"><input id="key" type="password" placeholder="ADMIN_KEY (dari Variables Railway)"><button onclick="go()">Masuk</button></div>
+<div id="app" hidden>
+ <h2>🎥 Kamera</h2><div id="cams"></div>
+ <h2>🎮 Kontrol</h2>
+ <button onclick="act('sim',8)">+8 Bot</button><button onclick="act('start')">Mulai sekarang</button><button onclick="act('reset')">Reset lobby</button>
+ <h2>🔧 Variabel</h2><div id="f"></div><button onclick="save()">💾 Simpan</button> <span id="s"></span>
+</div>
+<script>
+const $=i=>document.getElementById(i);
+const L={username:'Username TikTok yang live (tanpa @)',followRequired:'Wajib follow sebelum join',maxPlayers:'Maks pemain',minPlayers:'Min pemain untuk mulai',laps:'Jumlah lap',lobbySeconds:'Lama lobby (detik)',joinKeywords:'Kata untuk join (pisah koma)',nitroGifts:'Gift NOS/Nitro (pisah koma, contoh: rose,heart me)',nitroSeconds:'Durasi NOS per gift (detik)',rocketGifts:'Gift ROCKET (pisah koma, contoh: coffee,gg)',rocketTargets:'Gocart meledak per 1 rocket',stunSeconds:'Gocart mati setelah meledak (detik)',likeNitro:'Like menambah nitro',baseSpeed:'Kecepatan dasar gocart',camAutoSeconds:'Ganti kamera auto tiap (detik)'};
+let key,cfg,ks=[],sig='';
+const api=(p,b)=>fetch(p+'?key='+encodeURIComponent(key),b?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}:{}).then(r=>r.json());
+async function go(){key=$('key').value;let c;try{c=await api('/api/config')}catch{return alert('Gagal terhubung')}
+ if(c.error)return alert(c.error);cfg=c;$('login').hidden=1;$('app').hidden=0;build();cams();
+ const w=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host);
+ w.onmessage=e=>{const m=JSON.parse(e.data);if(m.type!=='state')return;ks=m.karts;const g=ks.map(k=>k.id).join();if(g!==sig){sig=g;cams()}}}
+function build(){$('f').innerHTML=Object.keys(L).map(k=>{const v=cfg[k];
+ return typeof v==='boolean'?`<label><input type="checkbox" id="c_${k}" ${v?'checked':''}> ${L[k]}</label>`:`<label>${L[k]}</label><input type="${typeof v==='number'?'number':'text'}" id="c_${k}" value="${String(v).replace(/"/g,'&quot;')}">`}).join('')}
+async function save(){const b={};for(const k in L){const e=$('c_'+k);b[k]=e.type==='checkbox'?e.checked:e.value}
+ cfg=await api('/api/config',b);$('s').textContent='✅ Tersimpan';setTimeout(()=>$('s').textContent='',2500)}
+async function setCam(m,t){cfg.camMode=m;if(t)cfg.camTarget=t;await api('/api/config',{camMode:cfg.camMode,camTarget:cfg.camTarget});cams()}
+function cams(){const a=cfg.camMode==='auto',b=(l,m,t)=>`<button class="${(m==='auto'?a:!a&&cfg.camTarget===t)?'on':''}" onclick="setCam('${m}','${t||''}')">${l}</button>`;
+ $('cams').innerHTML=b('🤖 AUTO (F1/MotoGP)','auto')+b('🌍 Overview','manual','overview')+b('🥇 Ikut Leader','manual','leader')+b('⚔️ Battle','manual','battle')+b('🚁 TV Heli','manual','tv')+
+  '<div style="margin-top:8px;font-size:13px;color:#aaa">Fokus ke pemain:</div>'+(ks.map(k=>b(k.n.replace(/[<>"']/g,''),'manual',k.id)).join('')||'<i style="color:#888">belum ada pemain</i>')}
+async function act(d,n){await api('/api/action',{do:d,n})}
+</script></body></html>
