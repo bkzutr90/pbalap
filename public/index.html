@@ -49,7 +49,7 @@ function camUpdate(){
  else if(k){const p=pos(k);tx=p.x+Math.cos(p.a)*40;ty=p.y+Math.sin(p.a)*40;tz=s==='tv'?1.5:2.4}
  cam.x+=(tx-cam.x)*.07;cam.y+=(ty-cam.y)*.07;cam.z+=(tz-cam.z)*.05}
 function draw(){
- camUpdate();x.setTransform(1,0,0,1,0,0);x.fillStyle='#000';x.fillRect(0,0,1280,720);x.save();x.translate(640,360);x.scale(cam.z);x.translate(-cam.x,-cam.y);
+ camUpdate();x.setTransform(1,0,0,1,0,0);x.fillStyle='#000';x.fillRect(0,0,1280,720);x.save();x.translate(640,360);x.scale(cam.z,cam.z);x.translate(-cam.x,-cam.y);
  x.fillStyle='#1d7a3a';x.fillRect(-3000,-3000,7000,7000);
  path();x.lineWidth=124;x.strokeStyle='#fff';x.stroke();x.lineWidth=114;x.strokeStyle='#d33';x.setLineDash([22,22]);x.stroke();
  x.setLineDash([]);x.lineWidth=108;x.strokeStyle='#3a3d45';x.stroke();
