@@ -1,6 +1,6 @@
 const express = require('express'), http = require('http'), fs = require('fs'), path = require('path');
 const { WebSocketServer } = require('ws');
-const { TikTokLiveConnection, WebcastEvent, ControlEvent } = require('tiktok-live-connector');
+let TikTokLiveConnection, WebcastEvent, ControlEvent; // paket ESM, dimuat lewat import() dinamis
 
 const E = process.env, PORT = E.PORT || 3000, TRACK = 2200;
 let USER, FOLLOW_REQ, MAX, MIN, LAPS, LOBBY;
@@ -134,10 +134,14 @@ function fire(by, nm) {
   feed(`🚀 ${nm} meledakkan ${t.n}! 💥`, 'gift');
   setTimeout(() => { t.boom = cfg.stunSeconds; t.s = 0; t.d = Math.max(0, t.d - 30); }, 700);
 }
-function connectTT() {
+async function connectTT() {
   if (!USER) return console.log('Isi env TIKTOK_USERNAME (tanpa @)');
+  if (!TikTokLiveConnection) {
+    try { ({ TikTokLiveConnection, WebcastEvent, ControlEvent } = await import('tiktok-live-connector')); }
+    catch (e) { console.error('Gagal memuat tiktok-live-connector:', e?.message || e); return setTimeout(connectTT, 15000); }
+  }
   try { tt && tt.disconnect(); } catch {}
-  const c = tt = new TikTokLiveConnection(USER);
+  const c = tt = new TikTokLiveConnection(USER, { processInitialData: false });
   c.on(WebcastEvent.CHAT, d => { const t = (d.comment || '').trim().toLowerCase(); if (list(cfg.joinKeywords).includes(t)) join(U(d), d); });
   c.on(WebcastEvent.FOLLOW, d => { const u = U(d); followers.add(u.uniqueId); feed(`➕ ${u.nickname || u.uniqueId} follow! Komen "join" / "1"`, 'follow'); });
   c.on(WebcastEvent.LIKE, d => { const k = karts.get(U(d).uniqueId); if (k && cfg.likeNitro) k.nitro = Math.min(100, k.nitro + (d.likeCount || 1) * 3); });
